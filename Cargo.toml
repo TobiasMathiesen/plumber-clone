@@ -1,0 +1,7 @@
+[package]
+name = "mario"
+version = "0.1.0"
+authors = ["Tobias Mathiesen <tobias2222@hotmail.com>"]
+
+[dependencies]
+ggez = "*"
