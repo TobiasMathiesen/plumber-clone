@@ -2,6 +2,7 @@ use ggez::graphics::{Color, Point2};
 use ggez::{event, graphics, Context, GameResult};
 use object::Direction;
 use player::Player;
+use enemy::Enemy;
 use sprite;
 use sprite::{EMPTY_SPRITE, SCALE_FACTOR, SPRITE_SIZE};
 
@@ -32,6 +33,7 @@ pub struct MainState {
     pub mode: GameMode,
     pub editor: Editor,
     pub player: Player,
+    pub enemies: Vec<Enemy>,
 }
 
 impl MainState {
@@ -47,6 +49,7 @@ impl MainState {
         let mode = GameMode::Editor;
         let editor = Editor { index: 0 };
         let player = Player::new();
+        let enemies = Vec::new();
         for _ in 0..16 * 16 {
             map.tiles.push(Tile {
                 active: true,
@@ -60,6 +63,7 @@ impl MainState {
             editor,
             player_image,
             player,
+            enemies,
         };
         Ok(main_state)
     }
@@ -77,6 +81,10 @@ impl MainState {
             param.dest.x += 32.0;
         }
         graphics::draw_ex(ctx, &self.player_image, param)?;
+        Ok(())
+    }
+
+    fn draw_enemies(&mut self, ctx: &mut Context) -> GameResult<()> {
         Ok(())
     }
 
@@ -143,6 +151,9 @@ impl event::EventHandler for MainState {
                 } else {
                     self.mode = GameMode::Editor;
                 }
+            },
+            event::Keycode::R => {
+                self.player.obj.pos = Point2::new(0.0, 320.0);
             }
             _ => {}
         }

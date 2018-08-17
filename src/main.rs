@@ -6,6 +6,7 @@ mod bbox;
 mod sprite;
 mod state;
 mod input;
+mod enemy;
 
 use bbox::BBox;
 use ggez::conf;

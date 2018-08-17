@@ -1,6 +1,6 @@
 use BBox;
 use Object;
-
+use object;
 use ggez::GameResult;
 use graphics::Point2;
 use sprite::EMPTY_SPRITE;
@@ -22,6 +22,7 @@ impl Player {
     pub fn new() -> Player {
         let mut obj = Object::new();
         obj.bounds = Point2::new(32.0, 32.0);
+        obj.transform = object::Transform::new(4.0, 4.0, 8.0, 8.0);
         obj.pos = Point2::new(0.0, 320.0);
         let sprite_id = PLAYER_SPRITE_STANDING;
         let moving_left = false;
@@ -90,39 +91,13 @@ impl Player {
             }
         }
 
-        self.obj.pos.y -= self.obj.velocity.y;
+        // Updates position based on velocity and handle collisions
+        self.obj.update(map);
 
-        let player_bbox = self.get_bbox();
-
-        if let Some(collision) = self.collided(&player_bbox, map) {
-            if self.obj.is_falling {
-                self.obj.pos.y = collision.pos.y - self.obj.bounds.y - 1.0;
-                self.obj.is_falling = false;
-            } else if self.obj.is_jumping {
-                self.obj.pos.y = collision.pos.y + collision.size.y + 1.0;
-                self.obj.is_jumping = false;
-                self.obj.is_falling = true;
-            }
-            self.obj.velocity.y = 0.0;
-        }
-
-        self.obj.pos.x += self.obj.velocity.x;
-
-        let player_bbox = self.get_bbox();
-
-        if let Some(collision) = self.collided(&player_bbox, map) {
-            if self.obj.velocity.x < 0.0 {
-                self.obj.pos.x = collision.pos.x + collision.size.x - 3.0;
-            } else {
-                self.obj.pos.x = collision.pos.x - self.obj.bounds.x + 3.0;
-            }
-            self.obj.velocity.x = 0.0;
-        }
-
-        let mut beneath_bbox = self.get_bbox();
+        let mut beneath_bbox = self.obj.get_bbox();
         beneath_bbox.pos.y += 32.0;
 
-        if !self.collided(&beneath_bbox, map).is_some() && !self.obj.is_jumping {
+        if !Object::collided(&beneath_bbox, map).is_some() && !self.obj.is_jumping {
             self.obj.is_falling = true;
         }
 
@@ -131,7 +106,7 @@ impl Player {
     }
 
     fn set_animation(&mut self) {
-        self.sprite_id = PLAYER_SPRITE_STANDING; // Default case is the standing animation
+        self.sprite_id = PLAYER_SPRITE_STANDING; // Default case is standing animation
         if self.obj.is_jumping || self.obj.is_falling {
             self.sprite_id = 47;
         } else if self.obj.velocity.x != 0.0 {
@@ -152,38 +127,5 @@ impl Player {
                 self.run_cycle = 0;
             }
         }
-    }
-
-    // Tests if the player collided with any active, non-empty tiles
-    // If collision occured returns the bounding box of the tile collided with
-    fn collided(&mut self, player_bbox: &BBox, map: &Map) -> Option<BBox> {
-        for (i, tile) in map.tiles.iter().enumerate() {
-            if tile.id == EMPTY_SPRITE {
-                continue;
-            }
-
-            let i = i as u32;
-            let x = (i % map.dimensions.0) * 32;
-            let y = (i / map.dimensions.0) * 32;
-            let bbox = BBox::new(x as f32, y as f32, 32.0, 32.0);
-            if player_bbox.intersects(&bbox) {
-                return Some(bbox);
-            }
-        }
-        None
-    }
-
-    pub fn get_bbox(&self) -> BBox {
-        let mut bbox = BBox {
-            pos: self.obj.pos,
-            size: self.obj.bounds,
-        };
-
-        // Bounding box isn't as big as whole sprite, so trim by 4 pixels on each side
-        bbox.pos.x += 4.0;
-        bbox.size.x -= 8.0;
-        bbox.pos.y += 4.0;
-        bbox.size.y -= 8.0;
-        bbox
     }
 }
